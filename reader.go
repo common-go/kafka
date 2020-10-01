@@ -1,8 +1,10 @@
 package kafka
 
-import "github.com/segmentio/kafka-go"
+import (
+	"github.com/segmentio/kafka-go"
+)
 
-func NewReader(c ConsumerConfig) *kafka.Reader {
+func NewReader(c ConsumerConfig, dialer *kafka.Dialer) *kafka.Reader {
 	if c.CommitInterval > 0 {
 		reader := kafka.NewReader(kafka.ReaderConfig{
 			Brokers:        c.Brokers,
@@ -11,6 +13,7 @@ func NewReader(c ConsumerConfig) *kafka.Reader {
 			MinBytes:       c.MinBytes,
 			MaxBytes:       c.MaxBytes,
 			CommitInterval: c.CommitInterval,
+			Dialer:         dialer,
 		})
 		return reader
 	} else {
@@ -20,6 +23,7 @@ func NewReader(c ConsumerConfig) *kafka.Reader {
 			Topic:    c.Topic,
 			MinBytes: c.MinBytes,
 			MaxBytes: c.MaxBytes,
+			Dialer:   dialer,
 		})
 		return reader
 	}

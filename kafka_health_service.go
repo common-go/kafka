@@ -8,7 +8,7 @@ import (
 
 type KafkaHealthService struct {
 	Brokers []string
-	name     string
+	name    string
 }
 
 func NewDefaultKafkaHealthService(brokers []string) *KafkaHealthService {
@@ -37,7 +37,7 @@ func (s *KafkaHealthService) Check(ctx context.Context) (map[string]interface{},
 		}
 		conn.Close()
 	}
-	res["stats"] = "success"
+	res["status"] = "success"
 	return res, nil
 }
 

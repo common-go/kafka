@@ -2,7 +2,10 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
+	"github.com/segmentio/kafka-go/sasl/scram"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
@@ -18,13 +21,18 @@ func NewProducer(writer *kafka.Writer, generateKey bool) (*Producer, error) {
 }
 
 func NewProducerByConfig(c ProducerConfig, generateKey bool) (*Producer, error) {
-	writer := NewWriter(c.Topic, c.Brokers)
+	dialer := GetDialer(c.Client.Username, c.Client.Password, scram.SHA512, &kafka.Dialer{
+		Timeout:   30 * time.Second,
+		DualStack: true,
+		TLS:       &tls.Config{},
+	})
+	writer := NewWriter(c.Topic, c.Brokers, dialer)
 	return NewProducer(writer, generateKey)
 }
 
 func (p *Producer) Produce(ctx context.Context, data []byte, messageAttributes *map[string]string) (string, error) {
 	msg := kafka.Message{Value: data}
-	if messageAttributes != nil  {
+	if messageAttributes != nil {
 		msg.Headers = MapToHeader(*messageAttributes)
 	}
 	if p.Key {

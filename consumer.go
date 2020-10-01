@@ -2,9 +2,12 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
+	"time"
 
 	"github.com/common-go/mq"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/scram"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +21,12 @@ func NewConsumer(reader *kafka.Reader, ackOnConsume bool) (*Consumer, error) {
 }
 
 func NewConsumerByConfig(c ConsumerConfig, ackOnConsume bool) (*Consumer, error) {
-	reader := NewReader(c)
+	dialer := GetDialer(c.Client.Username, c.Client.Password, scram.SHA512, &kafka.Dialer{
+		Timeout:   30 * time.Second,
+		DualStack: true,
+		TLS:       &tls.Config{},
+	})
+	reader := NewReader(c, dialer)
 	return NewConsumer(reader, ackOnConsume)
 }
 
