@@ -6,25 +6,25 @@ import (
 	"time"
 )
 
-type KafkaHealthCheck struct {
+type KafkaHealthChecker struct {
 	Brokers []string
 	Service string
 	Timeout int64
 }
 
-func NewDefaultKafkaHealthCheck(brokers []string) *KafkaHealthCheck {
-	return NewKafkaHealthCheck(brokers, "kafka", 5)
+func NewDefaultKafkaHealthChecker(brokers []string) *KafkaHealthChecker {
+	return NewKafkaHealthChecker(brokers, "kafka", 5)
 }
 
-func NewKafkaHealthCheck(brokers []string, name string, timeout int64) *KafkaHealthCheck {
-	return &KafkaHealthCheck{brokers, name, timeout}
+func NewKafkaHealthChecker(brokers []string, name string, timeout int64) *KafkaHealthChecker {
+	return &KafkaHealthChecker{brokers, name, timeout}
 }
 
-func (s *KafkaHealthCheck) Name() string {
+func (s *KafkaHealthChecker) Name() string {
 	return s.Service
 }
 
-func (s *KafkaHealthCheck) Check(ctx context.Context) (map[string]interface{}, error) {
+func (s *KafkaHealthChecker) Check(ctx context.Context) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	dialer := &kafka.Dialer{
@@ -42,7 +42,7 @@ func (s *KafkaHealthCheck) Check(ctx context.Context) (map[string]interface{}, e
 	return res, nil
 }
 
-func (s *KafkaHealthCheck) Build(ctx context.Context, data map[string]interface{}, err error) map[string]interface{} {
+func (s *KafkaHealthChecker) Build(ctx context.Context, data map[string]interface{}, err error) map[string]interface{} {
 	if err == nil {
 		return data
 	}
