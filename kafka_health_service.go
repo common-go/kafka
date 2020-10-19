@@ -6,28 +6,29 @@ import (
 	"time"
 )
 
-type KafkaHealthService struct {
+type KafkaHealthCheck struct {
 	Brokers []string
-	name    string
+	Service string
+	Timeout int64
 }
 
-func NewDefaultKafkaHealthService(brokers []string) *KafkaHealthService {
-	return NewKafkaHealthService(brokers, "kafka")
+func NewDefaultKafkaHealthCheck(brokers []string) *KafkaHealthCheck {
+	return NewKafkaHealthCheck(brokers, "kafka", 5)
 }
 
-func NewKafkaHealthService(brokers []string, name string) *KafkaHealthService {
-	return &KafkaHealthService{brokers, name}
+func NewKafkaHealthCheck(brokers []string, name string, timeout int64) *KafkaHealthCheck {
+	return &KafkaHealthCheck{brokers, name, timeout}
 }
 
-func (s *KafkaHealthService) Name() string {
-	return s.name
+func (s *KafkaHealthCheck) Name() string {
+	return s.Service
 }
 
-func (s *KafkaHealthService) Check(ctx context.Context) (map[string]interface{}, error) {
+func (s *KafkaHealthCheck) Check(ctx context.Context) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	dialer := &kafka.Dialer{
-		Timeout:   10 * time.Second,
+		Timeout:   time.Duration(s.Timeout) * time.Second,
 		DualStack: true,
 	}
 	for _, broker := range s.Brokers {
@@ -41,7 +42,7 @@ func (s *KafkaHealthService) Check(ctx context.Context) (map[string]interface{},
 	return res, nil
 }
 
-func (s *KafkaHealthService) Build(ctx context.Context, data map[string]interface{}, err error) map[string]interface{} {
+func (s *KafkaHealthCheck) Build(ctx context.Context, data map[string]interface{}, err error) map[string]interface{} {
 	if err == nil {
 		return data
 	}
