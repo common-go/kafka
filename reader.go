@@ -1,32 +1,24 @@
 package kafka
 
-import (
-	"github.com/segmentio/kafka-go"
-)
+import "github.com/segmentio/kafka-go"
 
 func NewReader(c ConsumerConfig, dialer *kafka.Dialer) *kafka.Reader {
-	if c.CommitInterval > 0 {
-		reader := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:        c.Brokers,
-			GroupID:        c.GroupID,
-			Topic:          c.Topic,
-			MinBytes:       c.MinBytes,
-			MaxBytes:       c.MaxBytes,
-			CommitInterval: c.CommitInterval,
-			Dialer:         dialer,
-		})
-		return reader
-	} else {
-		reader := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:  c.Brokers,
-			GroupID:  c.GroupID,
-			Topic:    c.Topic,
-			MinBytes: c.MinBytes,
-			MaxBytes: c.MaxBytes,
-			Dialer:   dialer,
-		})
-		return reader
+	c2 := kafka.ReaderConfig{
+		Brokers:  c.Brokers,
+		GroupID:  c.GroupID,
+		Topic:    c.Topic,
+		Dialer:   dialer,
 	}
+	if c.CommitInterval > 0 {
+		c2.CommitInterval = c.CommitInterval
+	}
+	if c.MinBytes != nil && *c.MinBytes >= 0 {
+		c2.MinBytes = *c.MinBytes
+	}
+	if c.MaxBytes > 0 {
+		c2.MaxBytes = c.MaxBytes
+	}
+	return kafka.NewReader(c2)
 }
 
 func HeaderToMap(headers []kafka.Header) map[string]string {

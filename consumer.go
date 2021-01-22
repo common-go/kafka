@@ -8,7 +8,6 @@ import (
 	"github.com/common-go/mq"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/scram"
-	"github.com/sirupsen/logrus"
 )
 
 type Consumer struct {
@@ -35,9 +34,6 @@ func (c *Consumer) Consume(ctx context.Context, caller mq.ConsumerCaller) {
 		msg, err := c.Reader.FetchMessage(ctx)
 		if err != nil {
 			caller.Call(ctx, nil, err)
-		}
-		if logrus.IsLevelEnabled(logrus.DebugLevel) {
-			logrus.Debugf("Received message: %s", msg.Value)
 		}
 		attributes := HeaderToMap(msg.Headers)
 		message := mq.Message{
