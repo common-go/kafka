@@ -30,10 +30,10 @@ func NewProducerByConfig(c ProducerConfig, generateKey bool) (*Producer, error) 
 	return NewProducer(writer, generateKey)
 }
 
-func (p *Producer) Produce(ctx context.Context, data []byte, messageAttributes *map[string]string) (string, error) {
+func (p *Producer) Produce(ctx context.Context, data []byte, messageAttributes map[string]string) (string, error) {
 	msg := kafka.Message{Value: data}
 	if messageAttributes != nil {
-		msg.Headers = MapToHeader(*messageAttributes)
+		msg.Headers = MapToHeader(messageAttributes)
 	}
 	if p.Key {
 		id := strings.Replace(uuid.New().String(), "-", "", -1)

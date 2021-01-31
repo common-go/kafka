@@ -29,22 +29,23 @@ func NewConsumerByConfig(c ConsumerConfig, ackOnConsume bool) (*Consumer, error)
 	return NewConsumer(reader, ackOnConsume)
 }
 
-func (c *Consumer) Consume(ctx context.Context, caller mq.ConsumerCaller) {
+func (c *Consumer) Consume(ctx context.Context, handle func(context.Context, *mq.Message, error) error) {
 	for {
 		msg, err := c.Reader.FetchMessage(ctx)
 		if err != nil {
-			caller.Call(ctx, nil, err)
+			handle(ctx, nil, err)
+		} else {
+			attributes := HeaderToMap(msg.Headers)
+			message := mq.Message{
+				Id:         string(msg.Key),
+				Data:       msg.Value,
+				Attributes: attributes,
+				Raw:        msg,
+			}
+			if c.AckOnConsume {
+				c.Reader.CommitMessages(ctx, msg)
+			}
+			handle(ctx, &message, nil)
 		}
-		attributes := HeaderToMap(msg.Headers)
-		message := mq.Message{
-			Id:         string(msg.Key),
-			Data:       msg.Value,
-			Attributes: attributes,
-			Raw:        msg,
-		}
-		if c.AckOnConsume {
-			c.Reader.CommitMessages(ctx, msg)
-		}
-		caller.Call(ctx, &message, nil)
 	}
 }

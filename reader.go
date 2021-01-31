@@ -4,13 +4,13 @@ import "github.com/segmentio/kafka-go"
 
 func NewReader(c ConsumerConfig, dialer *kafka.Dialer) *kafka.Reader {
 	c2 := kafka.ReaderConfig{
-		Brokers:  c.Brokers,
-		GroupID:  c.GroupID,
-		Topic:    c.Topic,
-		Dialer:   dialer,
+		Brokers: c.Brokers,
+		GroupID: c.GroupID,
+		Topic:   c.Topic,
+		Dialer:  dialer,
 	}
-	if c.CommitInterval > 0 {
-		c2.CommitInterval = c.CommitInterval
+	if c.CommitInterval != nil {
+		c2.CommitInterval = *c.CommitInterval
 	}
 	if c.MinBytes != nil && *c.MinBytes >= 0 {
 		c2.MinBytes = *c.MinBytes
