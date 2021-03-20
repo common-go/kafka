@@ -12,18 +12,24 @@ type KafkaHealthChecker struct {
 	Timeout int64
 }
 
-func NewKafkaHealthChecker(brokers []string, options ...string) *KafkaHealthChecker {
+func NewHealthChecker(brokers []string, options ...string) *KafkaHealthChecker {
 	var name string
 	if len(options) >= 1 && len(options[0]) > 0 {
 		name = options[0]
 	} else {
 		name = "kafka"
 	}
-	return NewKafkaHealthCheckerWithTimeout(brokers, name, 4)
+	return NewKafkaHealthChecker(brokers, name, 4)
 }
 
-func NewKafkaHealthCheckerWithTimeout(brokers []string, name string, timeout int64) *KafkaHealthChecker {
-	return &KafkaHealthChecker{brokers, name, timeout}
+func NewKafkaHealthChecker(brokers []string, name string, timeouts ...int64) *KafkaHealthChecker {
+	var timeout int64
+	if len(timeouts) >= 1 {
+		timeout = timeouts[0]
+	} else {
+		timeout = 4
+	}
+	return &KafkaHealthChecker{Brokers: brokers, Service: name, Timeout: timeout}
 }
 
 func (s *KafkaHealthChecker) Name() string {

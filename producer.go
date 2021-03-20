@@ -20,7 +20,11 @@ func NewProducer(writer *kafka.Writer, generateKey bool) (*Producer, error) {
 	return &Producer{Writer: writer, Key: generateKey}, nil
 }
 
-func NewProducerByConfig(c ProducerConfig, generateKey bool) (*Producer, error) {
+func NewProducerByConfig(c ProducerConfig) (*Producer, error) {
+	generateKey := true
+	if c.Key != nil {
+		generateKey = *c.Key
+	}
 	dialer := GetDialer(c.Client.Username, c.Client.Password, scram.SHA512, &kafka.Dialer{
 		Timeout:   30 * time.Second,
 		DualStack: true,
