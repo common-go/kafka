@@ -1,6 +1,6 @@
 package kafka
 
-type ProducerConfig struct {
+type WriterConfig struct {
 	Brokers []string     `mapstructure:"brokers"`
 	Topic   string       `mapstructure:"topic"`
 	Client  ClientConfig `mapstructure:"client"`

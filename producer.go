@@ -3,24 +3,24 @@ package kafka
 import (
 	"context"
 	"crypto/tls"
-	"github.com/segmentio/kafka-go/sasl/scram"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
-type Producer struct {
+type Writer struct {
 	Writer *kafka.Writer
 	Key    bool
 }
 
-func NewProducer(writer *kafka.Writer, generateKey bool) (*Producer, error) {
-	return &Producer{Writer: writer, Key: generateKey}, nil
+func NewWriter(writer *kafka.Writer, generateKey bool) (*Writer, error) {
+	return &Writer{Writer: writer, Key: generateKey}, nil
 }
 
-func NewProducerByConfig(c ProducerConfig) (*Producer, error) {
+func NewWriterByConfig(c WriterConfig) (*Writer, error) {
 	generateKey := true
 	if c.Key != nil {
 		generateKey = *c.Key
@@ -30,11 +30,11 @@ func NewProducerByConfig(c ProducerConfig) (*Producer, error) {
 		DualStack: true,
 		TLS:       &tls.Config{},
 	})
-	writer := NewWriter(c.Topic, c.Brokers, dialer)
-	return NewProducer(writer, generateKey)
+	writer := NewKafkaWriter(c.Topic, c.Brokers, dialer)
+	return NewWriter(writer, generateKey)
 }
 
-func (p *Producer) Produce(ctx context.Context, data []byte, messageAttributes map[string]string) (string, error) {
+func (p *Writer) Write(ctx context.Context, data []byte, messageAttributes map[string]string) (string, error) {
 	msg := kafka.Message{Value: data}
 	if messageAttributes != nil {
 		msg.Headers = MapToHeader(messageAttributes)

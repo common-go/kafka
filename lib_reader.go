@@ -2,7 +2,7 @@ package kafka
 
 import "github.com/segmentio/kafka-go"
 
-func NewReader(c ConsumerConfig, dialer *kafka.Dialer) *kafka.Reader {
+func NewKafkaReader(c ReaderConfig, dialer *kafka.Dialer) *kafka.Reader {
 	c2 := kafka.ReaderConfig{
 		Brokers: c.Brokers,
 		GroupID: c.GroupID,

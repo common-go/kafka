@@ -10,26 +10,26 @@ import (
 	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
-type Consumer struct {
+type Reader struct {
 	Reader       *kafka.Reader
 	AckOnConsume bool
 }
 
-func NewConsumer(reader *kafka.Reader, ackOnConsume bool) (*Consumer, error) {
-	return &Consumer{Reader: reader, AckOnConsume: ackOnConsume}, nil
+func NewReader(reader *kafka.Reader, ackOnConsume bool) (*Reader, error) {
+	return &Reader{Reader: reader, AckOnConsume: ackOnConsume}, nil
 }
 
-func NewConsumerByConfig(c ConsumerConfig, ackOnConsume bool) (*Consumer, error) {
+func NewReaderByConfig(c ReaderConfig, ackOnConsume bool) (*Reader, error) {
 	dialer := GetDialer(c.Client.Username, c.Client.Password, scram.SHA512, &kafka.Dialer{
 		Timeout:   30 * time.Second,
 		DualStack: true,
 		TLS:       &tls.Config{},
 	})
-	reader := NewReader(c, dialer)
-	return NewConsumer(reader, ackOnConsume)
+	reader := NewKafkaReader(c, dialer)
+	return NewReader(reader, ackOnConsume)
 }
 
-func (c *Consumer) Consume(ctx context.Context, handle func(context.Context, *mq.Message, error) error) {
+func (c *Reader) Read(ctx context.Context, handle func(context.Context, *mq.Message, error) error) {
 	for {
 		msg, err := c.Reader.FetchMessage(ctx)
 		if err != nil {

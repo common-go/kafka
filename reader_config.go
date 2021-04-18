@@ -2,7 +2,7 @@ package kafka
 
 import "time"
 
-type ConsumerConfig struct {
+type ReaderConfig struct {
 	Brokers        []string       `mapstructure:"brokers"`
 	GroupID        string         `mapstructure:"group_id"`
 	Topic          string         `mapstructure:"topic"`
