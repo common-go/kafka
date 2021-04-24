@@ -12,9 +12,9 @@ func NewKafkaWriter(topic string, brokers []string, dialer *kafka.Dialer) *kafka
 	return writer
 }
 
-func MapToHeader(messageAttributes map[string]string) []kafka.Header {
+func MapToHeader(attributes map[string]string) []kafka.Header {
 	headers := make([]kafka.Header, 0)
-	for k, v := range messageAttributes {
+	for k, v := range attributes {
 		h := kafka.Header{Key: k, Value: []byte(v)}
 		headers = append(headers, h)
 	}
