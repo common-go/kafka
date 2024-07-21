@@ -2,8 +2,8 @@
 Apache Kafka is an open-source stream processing platform developed by the Apache Software Foundation, designed for building real-time data pipelines and streaming applications. It is capable of handling high-throughput, low-latency data streams, making it ideal for use cases that require processing of large volumes of data in real-time.
 
 ### Libraries for Kafka
-- GO: [kafka](https://github.com/core-go/kafka), to wrap and simplify [segmentio/kafka-go](https://github.com/segmentio/kafka-go). Example is at [go-kafka-sample](https://github.com/project-samples/go-kafka-sample)
-- nodejs: [kafka-plus](https://www.npmjs.com/package/kafka-plus), to wrap and simplify [kafkajs](https://www.npmjs.com/package/kafkajs). Example is at [kafka-sample](https://github.com/typescript-tutorial/kafka-sample)
+- GO: [kafka](https://github.com/core-go/kafka), to wrap and simplify [segmentio/kafka-go](https://github.com/segmentio/kafka-go), [IBM/sarama](https://github.com/IBM/sarama) and [confluent-kafka-go](https://github.com/confluentinc/confluent-kafka-go). Example is at [go-kafka-sample](https://github.com/project-samples/go-kafka-sample).
+- nodejs: [kafka-plus](https://www.npmjs.com/package/kafka-plus), to wrap and simplify [kafkajs](https://www.npmjs.com/package/kafkajs). Example is at [kafka-sample](https://github.com/typescript-tutorial/kafka-sample).
 
 #### A common flow to consume a message from a message queue
 ![A common flow to consume a message from a message queue](https://cdn-images-1.medium.com/max/800/1*Y4QUN6QnfmJgaKigcNHbQA.png)
