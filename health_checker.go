@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-type KafkaHealthChecker struct {
+type HealthChecker struct {
 	Brokers []string
 	Service string
 	Timeout int64
 }
 
-func NewHealthChecker(brokers []string, options ...string) *KafkaHealthChecker {
+func NewHealthChecker(brokers []string, options ...string) *HealthChecker {
 	var name string
 	if len(options) >= 1 && len(options[0]) > 0 {
 		name = options[0]
@@ -22,21 +22,21 @@ func NewHealthChecker(brokers []string, options ...string) *KafkaHealthChecker {
 	return NewKafkaHealthChecker(brokers, name, 4)
 }
 
-func NewKafkaHealthChecker(brokers []string, name string, timeouts ...int64) *KafkaHealthChecker {
+func NewKafkaHealthChecker(brokers []string, name string, timeouts ...int64) *HealthChecker {
 	var timeout int64
 	if len(timeouts) >= 1 {
 		timeout = timeouts[0]
 	} else {
 		timeout = 4
 	}
-	return &KafkaHealthChecker{Brokers: brokers, Service: name, Timeout: timeout}
+	return &HealthChecker{Brokers: brokers, Service: name, Timeout: timeout}
 }
 
-func (s *KafkaHealthChecker) Name() string {
+func (s *HealthChecker) Name() string {
 	return s.Service
 }
 
-func (s *KafkaHealthChecker) Check(ctx context.Context) (map[string]interface{}, error) {
+func (s *HealthChecker) Check(ctx context.Context) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	dialer := &kafka.Dialer{
@@ -46,17 +46,19 @@ func (s *KafkaHealthChecker) Check(ctx context.Context) (map[string]interface{},
 	for _, broker := range s.Brokers {
 		conn, err := dialer.DialContext(ctx, "tcp", broker)
 		if err != nil {
-			return nil, err
+			return res, err
 		}
 		conn.Close()
 	}
-	res["status"] = "success"
 	return res, nil
 }
 
-func (s *KafkaHealthChecker) Build(ctx context.Context, data map[string]interface{}, err error) map[string]interface{} {
+func (s *HealthChecker) Build(ctx context.Context, data map[string]interface{}, err error) map[string]interface{} {
 	if err == nil {
 		return data
+	}
+	if data == nil {
+		data = make(map[string]interface{}, 0)
 	}
 	data["error"] = err.Error()
 	return data

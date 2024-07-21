@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Shopify/sarama"
-	"github.com/google/uuid"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -19,23 +17,24 @@ const (
 
 type Writer struct {
 	SyncProducer sarama.SyncProducer
-	Key          bool
 	Topic        string
+	Convert      func(context.Context, []byte) ([]byte, error)
+	Generate     func() string
 }
 
-func NewWriter(writer sarama.SyncProducer, generateKey bool, topic string) (*Writer, error) {
-	return &Writer{SyncProducer: writer, Key: generateKey, Topic: topic}, nil
-}
-func NewWriterByConfig(c WriterConfig) (*Writer, error) {
-	generateKey := true
-	if c.Key != nil {
-		generateKey = *c.Key
+func NewWriter(writer sarama.SyncProducer, topic string, convert func(context.Context, []byte)([]byte, error), options ...func() string) (*Writer, error) {
+	var generate func() string
+	if len(options) > 0 {
+		generate = options[0]
 	}
+	return &Writer{SyncProducer: writer, Topic: topic, Convert: convert, Generate: generate}, nil
+}
+func NewWriterByConfig(c WriterConfig, convert func(context.Context, []byte)([]byte, error), options ...func() string) (*Writer, error) {
 	writer, err := newSyncProducer(c)
 	if err != nil {
 		return nil, err
 	}
-	return NewWriter(*writer, generateKey, c.Topic)
+	return NewWriter(*writer, c.Topic, convert, options...)
 }
 func newSyncProducer(c WriterConfig) (*sarama.SyncProducer, error) {
 	if c.Client.Retry != nil && c.Client.Retry.Retry1 > 0 {
@@ -116,14 +115,45 @@ func NewSyncProducerByConfig(c WriterConfig) (*sarama.SyncProducer, error) {
 	}
 	return &writer, nil
 }
-
+func (p *Writer) Put(ctx context.Context, data []byte, attributes map[string]string) (string, error) {
+	return p.Write(ctx, data, attributes)
+}
+func (p *Writer) Send(ctx context.Context, data []byte, attributes map[string]string) (string, error) {
+	return p.Write(ctx, data, attributes)
+}
+func (p *Writer) Produce(ctx context.Context, data []byte, attributes map[string]string) (string, error) {
+	return p.Write(ctx, data, attributes)
+}
+func (p *Writer) Publish(ctx context.Context, data []byte, attributes map[string]string) (string, error) {
+	return p.Write(ctx, data, attributes)
+}
+func (p *Writer) PutWithKey(ctx context.Context, data []byte, key string, attributes map[string]string) (string, error) {
+	return p.WriteWithKey(ctx, data, key, attributes)
+}
+func (p *Writer) SendWithKey(ctx context.Context, data []byte, key string, attributes map[string]string) (string, error) {
+	return p.WriteWithKey(ctx, data, key, attributes)
+}
+func (p *Writer) ProduceWithKey(ctx context.Context, data []byte, key string, attributes map[string]string) (string, error) {
+	return p.WriteWithKey(ctx, data, key, attributes)
+}
+func (p *Writer) PublishWithKey(ctx context.Context, data []byte, key string, attributes map[string]string) (string, error) {
+	return p.WriteWithKey(ctx, data, key, attributes)
+}
 func (p *Writer) Write(ctx context.Context, data []byte, messageAttributes map[string]string) (string, error) {
-	msg := sarama.ProducerMessage{Value: sarama.ByteEncoder(data), Topic: p.Topic}
+	var binary = data
+	var err error
+	if p.Convert != nil {
+		binary, err = p.Convert(ctx, data)
+		if err != nil {
+			return "", err
+		}
+	}
+	msg := sarama.ProducerMessage{Value: sarama.ByteEncoder(binary), Topic: p.Topic}
 	if messageAttributes != nil {
 		msg.Headers = MapToHeader(messageAttributes)
 	}
-	if p.Key {
-		id := strings.Replace(uuid.New().String(), "-", "", -1)
+	if p.Generate != nil {
+		id := p.Generate()
 		msg.Key = sarama.StringEncoder(id)
 		p, o, err := p.SyncProducer.SendMessage(&msg)
 		m := make(map[string]interface{})
@@ -140,4 +170,28 @@ func (p *Writer) Write(ctx context.Context, data []byte, messageAttributes map[s
 		b, _ := json.Marshal(m)
 		return string(b), err
 	}
+}
+func (p *Writer) WriteWithKey(ctx context.Context, data []byte, key string, messageAttributes map[string]string) (string, error) {
+	var binary = data
+	var err error
+	if p.Convert != nil {
+		binary, err = p.Convert(ctx, data)
+		if err != nil {
+			return "", err
+		}
+	}
+	msg := sarama.ProducerMessage{Value: sarama.ByteEncoder(binary), Topic: p.Topic}
+	if messageAttributes != nil {
+		msg.Headers = MapToHeader(messageAttributes)
+	}
+	m := make(map[string]interface{})
+	if len(key) > 0 {
+		msg.Key = sarama.StringEncoder(key)
+		m[Key] = key
+	}
+	pt, o, err := p.SyncProducer.SendMessage(&msg)
+	m[Partition] = pt
+	m[Offset] = o
+	b, _ := json.Marshal(m)
+	return string(b), err
 }

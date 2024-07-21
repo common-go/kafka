@@ -8,20 +8,20 @@ import (
 	"time"
 )
 
-type Writer struct {
+type TopicWriter struct {
 	Writer   *kafka.Writer
 	Generate func() string
 }
 
-func NewWriter(writer *kafka.Writer, options ...func() string) (*Writer, error) {
+func NewTopicWriter(writer *kafka.Writer, options ...func() string) (*TopicWriter, error) {
 	var generate func() string
 	if len(options) > 0 {
 		generate = options[0]
 	}
-	return &Writer{Writer: writer, Generate: generate}, nil
+	return &TopicWriter{Writer: writer, Generate: generate}, nil
 }
 
-func NewWriterByConfig(c WriterConfig, options ...func() string) (*Writer, error) {
+func NewTopicWriterByConfig(c WriterConfig, options ...func() string) (*TopicWriter, error) {
 	if c.Client.Timeout <= 0 {
 		c.Client.Timeout = 30
 	}
@@ -31,10 +31,9 @@ func NewWriterByConfig(c WriterConfig, options ...func() string) (*Writer, error
 		TLS:       &tls.Config{},
 	})
 	writer := NewKafkaWriter(c.Topic, c.Brokers, dialer)
-	return NewWriter(writer, options...)
+	return NewTopicWriter(writer, options...)
 }
-func (p *Writer) Write(ctx context.Context, data []byte, attributes map[string]string) error {
-	var err error
+func (p *TopicWriter) Write(ctx context.Context, topic string, data []byte, attributes map[string]string) error {
 	msg := kafka.Message{Value: data}
 	if attributes != nil {
 		msg.Headers = MapToHeader(attributes)
@@ -42,36 +41,29 @@ func (p *Writer) Write(ctx context.Context, data []byte, attributes map[string]s
 	if p.Generate != nil {
 		id := p.Generate()
 		msg.Key = []byte(id)
-
-		err = p.Writer.WriteMessages(ctx, msg)
+		p.Writer.Topic = topic
+		err := p.Writer.WriteMessages(ctx, msg)
 		return err
 	} else {
-		err = p.Writer.WriteMessages(ctx, msg)
+		p.Writer.Topic = topic
+		err := p.Writer.WriteMessages(ctx, msg)
 		return err
 	}
 }
-func (p *Writer) WriteValue(ctx context.Context, data []byte) error {
-	var err error
-	msg := kafka.Message{Value: data}
-	if p.Generate != nil {
-		id := p.Generate()
-		msg.Key = []byte(id)
-		err = p.Writer.WriteMessages(ctx, msg)
-		return err
-	} else {
-		err = p.Writer.WriteMessages(ctx, msg)
-		return err
-	}
+func (p *TopicWriter) WriteValue(ctx context.Context, topic string, data []byte) error {
+	return p.Write(ctx, topic, data, nil)
 }
-func (p *Writer) WriteWithKey(ctx context.Context, data []byte, key []byte, attributes map[string]string) error {
+func (p *TopicWriter) WriteWithKey(ctx context.Context, topic string, data []byte, key []byte, attributes map[string]string) (string, error) {
+	var binary = data
 	var err error
-	msg := kafka.Message{Value: data}
+	msg := kafka.Message{Value: binary}
 	if attributes != nil {
 		msg.Headers = MapToHeader(attributes)
 	}
 	if key != nil {
 		msg.Key = key
 	}
+	p.Writer.Topic = topic
 	err = p.Writer.WriteMessages(ctx, msg)
-	return err
+	return "", err
 }
